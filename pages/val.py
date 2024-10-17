@@ -1,5 +1,10 @@
 import dash
-from dash import html
+import dash_core_components as dcc
+import dash_html_components as html
+from dash import dash_table as dt
+from dash.dependencies import Input, Output
+import dash_bootstrap_components as dbc
+import pandas as pd
 
 dash.register_page(__name__, path='/val', name = "DCF Valuation")
 
