@@ -1,0 +1,8 @@
+dash==2.18.1
+dash-core-components
+dash-html-components
+dash-table
+requests
+beautifulsoup4
+pandas
+gunicorn
