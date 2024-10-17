@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 
 # app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-app = dash.Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash(__name__, pages_folder='pages' use_pages=True, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
 # Header content
@@ -20,8 +20,8 @@ app.layout = html.Div(children = [
           dbc.DropdownMenu(
               label="PAGES",
               children=[
-                  dbc.DropdownMenuItem(dcc.Link('Home', href='/', style={"text-decoration":"none"}, className = "text-dark ")),
-                  dbc.DropdownMenuItem(dcc.Link('DCF Valuation', href='/val', style={"text-decoration":"none"}, className = "text-dark ")),
+                  dbc.DropdownMenuItem(dcc.Link(page['name'], href=page['relative_path'], style={"text-decoration":"none"}, className = "text-dark ")) for page in dash.page_registry.values()
+                  # dbc.DropdownMenuItem(dcc.Link('DCF Valuation', href='/val', style={"text-decoration":"none"}, className = "text-dark ")),
                   # dbc.DropdownMenuItem("Home", href="/"),
                   # dbc.DropdownMenuItem("DCF Valuation", href="/val"),
                   # dbc.DropdownMenuItem(page["name"], href = page["relative-path"]) for page in dash.page_registry.values()
@@ -34,7 +34,12 @@ app.layout = html.Div(children = [
       brand_href="/",
       color="dark",
       dark=True,
-)
+),
+
+    html.Div(
+        className = "p-3",
+        dash.page_container
+    )
     
 ])
 
