@@ -20,8 +20,10 @@ app.layout = html.Div(children = [
           dbc.DropdownMenu(
               label="PAGES",
               children=[
-                  dbc.DropdownMenuItem("Home", href="/"),
-                  dbc.DropdownMenuItem("DCF Valuation", href="/val"),
+                  dbc.DropdownMenuItem(dcc.Link('Home', href='/', style={"text-decoration":"none"}, className = "text-dark ")),
+                  dbc.DropdownMenuItem(dcc.Link('DCF Valuation', href='/val', style={"text-decoration":"none"}, className = "text-dark ")),
+                  # dbc.DropdownMenuItem("Home", href="/"),
+                  # dbc.DropdownMenuItem("DCF Valuation", href="/val"),
                   # dbc.DropdownMenuItem(page["name"], href = page["relative-path"]) for page in dash.page_registry.values()
               ],
               nav=True,
