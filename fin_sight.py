@@ -37,7 +37,7 @@ app.layout = html.Div(children = [
 ),
 
     html.Div(
-        className = "p-3",
+        # className = "p-3",
         dash.page_container
     )
     
