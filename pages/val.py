@@ -1,5 +1,6 @@
 import dash
 import dash_core_components as dcc
+from dash import callback
 import dash_html_components as html
 from dash import dash_table as dt
 from dash.dependencies import Input, Output
