@@ -15,7 +15,7 @@ layout = html.Div(
               html.Footer(
                   className = "d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top", 
                   style = {
-                      "position": "absolute", "bottom": "0",
+                      "position": "absolute", "bottom": "0", "left": "0",
                       "width": "100%",
                       "padding-left": "5%", "padding-right": "5%",
                   },
