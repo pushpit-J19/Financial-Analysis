@@ -11,22 +11,29 @@ layout = html.Div(
     children = [
         html.Div('This site provides interactive tools to valuate and analyze stocks through Reverse DCF model. Check the navigation bar for more.'),
     
-        html.Div(className = "container", children = [
-              html.Footer(className = "d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top", children = [
-                  html.P(className = "col-md-4 d-flex align-items-center", children = [
-                      html.Span(className = "mb-3 mb-md-0 text-body-secondary", children = [
-                          "Created by: Pushpit Jain", 
-                          html.Br(), 
-                          html.Span(children = ["Inspired by: ", html.A("Ambit", href = "https://reversedcf-fb0dd87970ce.herokuapp.com/")])
-                            ]),
-                      # html.Span(className = "mb-4 mb-md-4 text-body-secondary", children = ["Inspired: ", html.A("Ambit", href = "https://reversedcf-fb0dd87970ce.herokuapp.com/")]),
+        html.Div(children = [
+              html.Footer(
+                  className = "d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top", 
+                  style = {
+                      "position": "absolute", "bottom": "0",
+                      "width": "100%",
+                      "padding-left": "5%", "padding-right": "5%",
+                  },
+                  children = [
+                      html.P(className = "col-md-4 d-flex align-items-center", children = [
+                          html.Span(className = "mb-3 mb-md-0 text-body-secondary", children = [
+                              "Created by: Pushpit Jain", 
+                              html.Br(), 
+                              html.Span(children = ["Inspired by: ", html.A("Ambit", href = "https://reversedcf-fb0dd87970ce.herokuapp.com/")])
+                                ]),
+                          # html.Span(className = "mb-4 mb-md-4 text-body-secondary", children = ["Inspired: ", html.A("Ambit", href = "https://reversedcf-fb0dd87970ce.herokuapp.com/")]),
+                      ]),
+                      html.Div(className = "col-md-4 d-flex align-items-center justify-content-end", children = [
+                          html.Span(className = "mb-3 mb-md-0 text-body-secondary", children = ["Source Code: "]),
+                          html.A(html.Img(src = "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png", height = "40"), href = "https://github.com/pushpit-J19/Financial-Analysis/tree/main")
+                      ]),
+        
                   ]),
-                  html.Div(className = "col-md-4 d-flex align-items-center", children = [
-                      html.Span(className = "mb-3 mb-md-0 text-body-secondary", children = ["Source Code: "]),
-                      html.A(html.Img(src = "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png", height = "40"), href = "https://github.com/pushpit-J19/Financial-Analysis/tree/main")
-                  ]),
-    
-              ]),
               
           ])
     
