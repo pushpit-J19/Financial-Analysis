@@ -15,12 +15,14 @@ app.layout = html.Div(children = [
     
     dbc.NavbarSimple(
       className = "d-flex  justify-content-start",
+      style = {"margin-bottom":"1.5rem", "padding-top":"1.5rem", "padding-bottom":"1.5rem"},
       children=[
           # dbc.NavItem(dbc.NavLink("Page 1", href="/")),
           dbc.DropdownMenu(
               label="PAGES",
               children=[
-                  dbc.DropdownMenuItem(dcc.Link(page['name'], href=page['relative_path'], style={"text-decoration":"none"}, className = "text-dark ")) for page in dash.page_registry.values()
+                  dcc.Link(dbc.DropdownMenuItem(page['name']), href=page['relative_path'], style={"text-decoration":"none"}, className = "text-dark") for page in dash.page_registry.values()
+                  ## dbc.DropdownMenuItem(dcc.Link(page['name'], href=page['relative_path'], style={"text-decoration":"none"}, className = "text-dark ")) for page in dash.page_registry.values()
                   # dbc.DropdownMenuItem(dcc.Link('DCF Valuation', href='/val', style={"text-decoration":"none"}, className = "text-dark ")),
                   # dbc.DropdownMenuItem("Home", href="/"),
                   # dbc.DropdownMenuItem("DCF Valuation", href="/val"),
