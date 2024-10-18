@@ -155,7 +155,7 @@ layout = html.Div(id="body", children =[
 # CALLBACK FUNCTIONS
 ####################################################################################################################################################################################
 
-@app.callback(
+@callback(
     Output(component_id ='stock_symbol_span', component_property ='children'),
     Output(component_id ='current_pe_span', component_property ='children'),
     Output(component_id ='fy23_pe_span', component_property ='children'),
