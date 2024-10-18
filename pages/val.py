@@ -6,6 +6,8 @@ from dash import dash_table as dt
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 import pandas as pd
+from functions.dcf_calculator import calculate_intrinsic_pe, calculate_degree_of_overvaluation
+from functions.scrape import scrape_screener_info, check_consolidated_available, get_top_ratios, get_range_tables, get_pnl_table, get_ratios
 
 dash.register_page(__name__, path='/val', name = "DCF Valuation")
 
@@ -227,290 +229,290 @@ def dcf_callback_function(symbol, coc, roce, g, g_period, fade_period, gt):
 
 
 
-####################################################################################################################################################################################
-# VALUATION FUNCTIONS
-####################################################################################################################################################################################
+# ####################################################################################################################################################################################
+# # VALUATION FUNCTIONS
+# ####################################################################################################################################################################################
 
-# User inputs are cost of capital, RoCE, growth during high growth period, high growth period (years), fade period (years) and terminal growth rate
-# Tax rate is assumed constant at 25%.
-import pandas as pd
+# # User inputs are cost of capital, RoCE, growth during high growth period, high growth period (years), fade period (years) and terminal growth rate
+# # Tax rate is assumed constant at 25%.
+# import pandas as pd
 
 
-def calculate_intrinsic_pe(coc, roce, g, g_period, fade_period, gt):
-  tax_rate = 0.25
-  capital_ending_neg1 = 100
+# def calculate_intrinsic_pe(coc, roce, g, g_period, fade_period, gt):
+#   tax_rate = 0.25
+#   capital_ending_neg1 = 100
 
-  roce_post_tax = roce * (1-tax_rate)
-  reinvestment_rate_1 = g / roce_post_tax
-  reinvestment_rate_2 = gt / roce_post_tax
+#   roce_post_tax = roce * (1-tax_rate)
+#   reinvestment_rate_1 = g / roce_post_tax
+#   reinvestment_rate_2 = gt / roce_post_tax
 
-  capital_ending = []
-  nopat = []
-  ebt = []
-  investment = []
-  fcf = []
-  discount_factor = []
-  discount_fcf = []
+#   capital_ending = []
+#   nopat = []
+#   ebt = []
+#   investment = []
+#   fcf = []
+#   discount_factor = []
+#   discount_fcf = []
 
-  earning_g_rate = [g]*g_period
-  for i in range(fade_period):
-    earning_g_rate.append(earning_g_rate[-1] - ((g-gt)/fade_period) )
+#   earning_g_rate = [g]*g_period
+#   for i in range(fade_period):
+#     earning_g_rate.append(earning_g_rate[-1] - ((g-gt)/fade_period) )
 
   
 
-  for i in range (g_period+1):
-    if i == 0:
-      nopat.append( capital_ending_neg1 * roce_post_tax )
-    else:
-      nopat.append( capital_ending[-1] * roce_post_tax)
+#   for i in range (g_period+1):
+#     if i == 0:
+#       nopat.append( capital_ending_neg1 * roce_post_tax )
+#     else:
+#       nopat.append( capital_ending[-1] * roce_post_tax)
     
-    ebt.append(nopat[-1]/(1-tax_rate))
-    investment.append(nopat[-1] * reinvestment_rate_1)
-    fcf.append(nopat[-1] - investment[-1])
-    discount_factor.append( 1 / ((1+coc)**(i)) )
-    discount_fcf.append(fcf[-1] * discount_factor[-1])
+#     ebt.append(nopat[-1]/(1-tax_rate))
+#     investment.append(nopat[-1] * reinvestment_rate_1)
+#     fcf.append(nopat[-1] - investment[-1])
+#     discount_factor.append( 1 / ((1+coc)**(i)) )
+#     discount_fcf.append(fcf[-1] * discount_factor[-1])
 
-    if i == 0:
-      capital_ending.append( capital_ending_neg1 + investment[-1])
-    else:
-      capital_ending.append( capital_ending[-1] + investment[-1])
+#     if i == 0:
+#       capital_ending.append( capital_ending_neg1 + investment[-1])
+#     else:
+#       capital_ending.append( capital_ending[-1] + investment[-1])
 
-  for i in range (fade_period):
-    nopat.append( capital_ending[-1] * roce_post_tax)
-    ebt.append(nopat[-1]/(1-tax_rate))
-    investment.append(nopat[-1] * earning_g_rate[i+g_period]  / roce_post_tax)
-    fcf.append(nopat[-1] - investment[-1])
-    discount_factor.append( 1 / ((1+coc)**(i+g_period+1)) )
-    discount_fcf.append(fcf[-1] * discount_factor[-1])
-    capital_ending.append( capital_ending[-1] + investment[-1])
+#   for i in range (fade_period):
+#     nopat.append( capital_ending[-1] * roce_post_tax)
+#     ebt.append(nopat[-1]/(1-tax_rate))
+#     investment.append(nopat[-1] * earning_g_rate[i+g_period]  / roce_post_tax)
+#     fcf.append(nopat[-1] - investment[-1])
+#     discount_factor.append( 1 / ((1+coc)**(i+g_period+1)) )
+#     discount_fcf.append(fcf[-1] * discount_factor[-1])
+#     capital_ending.append( capital_ending[-1] + investment[-1])
   
-  earning_g_rate.insert(0,0)
-  df = pd.DataFrame({
-      "Earnings Growth Rate": earning_g_rate,
-      "EBT": ebt, "NOPAT" : nopat,
-      "Capital Ending" : capital_ending,
-      "Investment" : investment,
-      "FCF" : fcf, "Discount Factor": discount_factor, "Discounted FCF" : discount_fcf
-  })
+#   earning_g_rate.insert(0,0)
+#   df = pd.DataFrame({
+#       "Earnings Growth Rate": earning_g_rate,
+#       "EBT": ebt, "NOPAT" : nopat,
+#       "Capital Ending" : capital_ending,
+#       "Investment" : investment,
+#       "FCF" : fcf, "Discount Factor": discount_factor, "Discounted FCF" : discount_fcf
+#   })
 
-  terminal_nopat = nopat[-1] * (1+gt) / (coc - gt)
-  terminal_investment = terminal_nopat * reinvestment_rate_2
-  terminal_fcf = terminal_nopat - terminal_investment
-  terminal_discount_fcf = terminal_fcf * discount_factor[-1]
+#   terminal_nopat = nopat[-1] * (1+gt) / (coc - gt)
+#   terminal_investment = terminal_nopat * reinvestment_rate_2
+#   terminal_fcf = terminal_nopat - terminal_investment
+#   terminal_discount_fcf = terminal_fcf * discount_factor[-1]
 
-  metrics_dict = {}
-  metrics_dict["intrinsic value"] = df["Discounted FCF"].sum() + terminal_discount_fcf
-  metrics_dict["25 yr Exit Multiple"] = terminal_nopat / (nopat[-1] * (1+gt))
-  metrics_dict["terminal / total"] = terminal_discount_fcf / metrics_dict["intrinsic value"]
-  metrics_dict["TTM PB"] = metrics_dict["intrinsic value"] / df["Capital Ending"].iloc[0]
-  metrics_dict["TTM PE"] = metrics_dict["intrinsic value"] / df["NOPAT"].iloc[0]
-  metrics_dict["1yr forward PE"] = metrics_dict["intrinsic value"] / df["NOPAT"].iloc[1]
+#   metrics_dict = {}
+#   metrics_dict["intrinsic value"] = df["Discounted FCF"].sum() + terminal_discount_fcf
+#   metrics_dict["25 yr Exit Multiple"] = terminal_nopat / (nopat[-1] * (1+gt))
+#   metrics_dict["terminal / total"] = terminal_discount_fcf / metrics_dict["intrinsic value"]
+#   metrics_dict["TTM PB"] = metrics_dict["intrinsic value"] / df["Capital Ending"].iloc[0]
+#   metrics_dict["TTM PE"] = metrics_dict["intrinsic value"] / df["NOPAT"].iloc[0]
+#   metrics_dict["1yr forward PE"] = metrics_dict["intrinsic value"] / df["NOPAT"].iloc[1]
 
-  print(reinvestment_rate_1, reinvestment_rate_2)
-  print(earning_g_rate)
-  print(earning_g_rate[0+g_period])
-  print(df)
-  print(terminal_discount_fcf)
-  print(metrics_dict)
+#   print(reinvestment_rate_1, reinvestment_rate_2)
+#   print(earning_g_rate)
+#   print(earning_g_rate[0+g_period])
+#   print(df)
+#   print(terminal_discount_fcf)
+#   print(metrics_dict)
 
-  return df, metrics_dict
-
-
-def calculate_degree_of_overvaluation(current_pe, fy23_pe, calculated_intrinsic_pe):
-  if current_pe < fy23_pe:
-    return (current_pe/calculated_intrinsic_pe) - 1
-  else:
-    return (fy23_pe/calculated_intrinsic_pe) - 1
+#   return df, metrics_dict
 
 
-# calculate_intrinsic_pe(0.11, 0.2, 0.15, 15, 15, 0.05)
-# calculate_intrinsic_pe(0.11, 0.95, 0.15, 15, 15, 0.05)
+# def calculate_degree_of_overvaluation(current_pe, fy23_pe, calculated_intrinsic_pe):
+#   if current_pe < fy23_pe:
+#     return (current_pe/calculated_intrinsic_pe) - 1
+#   else:
+#     return (fy23_pe/calculated_intrinsic_pe) - 1
 
-####################################################################################################################################################################################
-# SCRAPING FUNCTIONS
-####################################################################################################################################################################################
 
-import requests
-from bs4 import BeautifulSoup
+# # calculate_intrinsic_pe(0.11, 0.2, 0.15, 15, 15, 0.05)
+# # calculate_intrinsic_pe(0.11, 0.95, 0.15, 15, 15, 0.05)
 
-def scrape_screener_info(symbol):
+# ####################################################################################################################################################################################
+# # SCRAPING FUNCTIONS
+# ####################################################################################################################################################################################
 
-  url = "https://www.screener.in/company/"+ symbol.upper() +"/consolidated/"
+# import requests
+# from bs4 import BeautifulSoup
 
-  try:
-    response = requests.get(url)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.content, 'html.parser')
+# def scrape_screener_info(symbol):
 
-    # CHECKING IF CONSOLIDATED DATA IS AVAILABLE
-    # by checking if PnL table is filled or not
-    if not check_consolidated_available(soup):
-      try:
-        url = "https://www.screener.in/company/"+ symbol.upper() +"/"
-        response = requests.get(url)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.content, 'html.parser')
-        print("Using Standalone data, since consolidated numbers are not available")
-      except requests.exceptions.RequestException as e:
-        print(f"Error: {e}")
-        return -1, "Error"
+#   url = "https://www.screener.in/company/"+ symbol.upper() +"/consolidated/"
+
+#   try:
+#     response = requests.get(url)
+#     response.raise_for_status()
+#     soup = BeautifulSoup(response.content, 'html.parser')
+
+#     # CHECKING IF CONSOLIDATED DATA IS AVAILABLE
+#     # by checking if PnL table is filled or not
+#     if not check_consolidated_available(soup):
+#       try:
+#         url = "https://www.screener.in/company/"+ symbol.upper() +"/"
+#         response = requests.get(url)
+#         response.raise_for_status()
+#         soup = BeautifulSoup(response.content, 'html.parser')
+#         print("Using Standalone data, since consolidated numbers are not available")
+#       except requests.exceptions.RequestException as e:
+#         print(f"Error: {e}")
+#         return -1, "Error"
     
-    pnl_section = soup.find("section", id="profit-loss")
+#     pnl_section = soup.find("section", id="profit-loss")
 
-    # # TOP RATIOS
-    # top_ratios_data = get_top_ratios(soup)
+#     # # TOP RATIOS
+#     # top_ratios_data = get_top_ratios(soup)
 
-    # print(top_ratios_data)
-
-
-    # 3, 5, 10 YEAR DATA
-    # year_data_tables_data = get_range_tables(pnl_section)
-
-    # print(year_data_tables_data)
-    # print(pd.DataFrame(year_data_tables_data))
+#     # print(top_ratios_data)
 
 
-    # # PNL TABLE
-    # pnl_df = get_pnl_table(pnl_section)
-    # print(pnl_df)
-    # # print(pnl_df.loc["Net Profit", :].iloc[-6:-1])
-    # # print(pnl_df.loc["Net Profit", "Mar 2023"])
+#     # 3, 5, 10 YEAR DATA
+#     # year_data_tables_data = get_range_tables(pnl_section)
 
-    # # RATIO TABLE
-    # ratio_df = get_ratios(soup)
-    # print(ratio_df)
-    # print(ratio_df.loc["ROCE %",:].iloc[-7:-2])
+#     # print(year_data_tables_data)
+#     # print(pd.DataFrame(year_data_tables_data))
 
 
-    return 200, soup
+#     # # PNL TABLE
+#     # pnl_df = get_pnl_table(pnl_section)
+#     # print(pnl_df)
+#     # # print(pnl_df.loc["Net Profit", :].iloc[-6:-1])
+#     # # print(pnl_df.loc["Net Profit", "Mar 2023"])
 
-  except requests.exceptions.RequestException as e:
-    print(f"Error: {e}")
-    return -1, "Error"
-
-# scrape_screener_info("ASIANPAINT")
-
-# print("aa")
-
-
-def check_consolidated_available(soup):
-  section = soup.find("section", id="profit-loss")
-  trows = section.find("table", class_="data-table").find("tbody").find_all("tr")
-  if len(trows[0].find_all("td")) > 1:
-    print(len(trows[0].find_all("td")))
-    return True
-  else:
-    print(len(trows[0].find_all("td")))
-    return False
+#     # # RATIO TABLE
+#     # ratio_df = get_ratios(soup)
+#     # print(ratio_df)
+#     # print(ratio_df.loc["ROCE %",:].iloc[-7:-2])
 
 
-# TOP RATIOS
-def get_top_ratios(soup):
+#     return 200, soup
 
-  top_ratios_data = {}
-  top_ratios_ul = soup.find('ul', id='top-ratios')
+#   except requests.exceptions.RequestException as e:
+#     print(f"Error: {e}")
+#     return -1, "Error"
 
-  if top_ratios_ul:
-    ratios = top_ratios_ul.find_all("li")
+# # scrape_screener_info("ASIANPAINT")
 
-    for ratio in ratios:
-      ratio_label = ratio.find("span", class_="name").text.strip()
-      if ratio_label == "High / Low":
-        # ratio_value_list = [span.text.strip().replace(",","") for span in ratio.find_all("span", class_="number")]
-        # ratio_value = ' / '.join(ratio_value_list)
-        ratio_value_list = ratio.find_all("span", class_="number")
-        top_ratios_data["High"] = ratio_value_list[0].text.strip().replace(",","")
-        top_ratios_data["Low"] = ratio_value_list[1].text.strip().replace(",","")
-      else:
-        ratio_value = ratio.find("span", class_="number").text.strip().replace(",","")
-        top_ratios_data[ratio_label] = ratio_value
+# # print("aa")
 
-  return top_ratios_data
 
-# 3, 5, 10 YEAR DATA
-def get_range_tables(pnl_section):
+# def check_consolidated_available(soup):
+#   section = soup.find("section", id="profit-loss")
+#   trows = section.find("table", class_="data-table").find("tbody").find_all("tr")
+#   if len(trows[0].find_all("td")) > 1:
+#     print(len(trows[0].find_all("td")))
+#     return True
+#   else:
+#     print(len(trows[0].find_all("td")))
+#     return False
 
-  year_data_tables_data = []
-  year_data_tables = pnl_section.find_all("table", class_ = "ranges-table")
 
-  for table in year_data_tables:
-    table_data = {}
-    trows = table.find_all("tr")
-    header = trows[0].find("th").text.strip()
-    table_data[""] = header
+# # TOP RATIOS
+# def get_top_ratios(soup):
 
-    for i in range (1, len(trows)):
-      data_points = trows[i].find_all("td")
-      label = data_points[0].text.strip().replace(",","").replace(":","")
-      value = data_points[1].text.strip().replace(",","").replace(":","")
-      table_data[label] = value
+#   top_ratios_data = {}
+#   top_ratios_ul = soup.find('ul', id='top-ratios')
+
+#   if top_ratios_ul:
+#     ratios = top_ratios_ul.find_all("li")
+
+#     for ratio in ratios:
+#       ratio_label = ratio.find("span", class_="name").text.strip()
+#       if ratio_label == "High / Low":
+#         # ratio_value_list = [span.text.strip().replace(",","") for span in ratio.find_all("span", class_="number")]
+#         # ratio_value = ' / '.join(ratio_value_list)
+#         ratio_value_list = ratio.find_all("span", class_="number")
+#         top_ratios_data["High"] = ratio_value_list[0].text.strip().replace(",","")
+#         top_ratios_data["Low"] = ratio_value_list[1].text.strip().replace(",","")
+#       else:
+#         ratio_value = ratio.find("span", class_="number").text.strip().replace(",","")
+#         top_ratios_data[ratio_label] = ratio_value
+
+#   return top_ratios_data
+
+# # 3, 5, 10 YEAR DATA
+# def get_range_tables(pnl_section):
+
+#   year_data_tables_data = []
+#   year_data_tables = pnl_section.find_all("table", class_ = "ranges-table")
+
+#   for table in year_data_tables:
+#     table_data = {}
+#     trows = table.find_all("tr")
+#     header = trows[0].find("th").text.strip()
+#     table_data[""] = header
+
+#     for i in range (1, len(trows)):
+#       data_points = trows[i].find_all("td")
+#       label = data_points[0].text.strip().replace(",","").replace(":","")
+#       value = data_points[1].text.strip().replace(",","").replace(":","")
+#       table_data[label] = value
     
-    year_data_tables_data.append(table_data)
-  year_data_tables_data[0][""] = "Sales Growth"
-  year_data_tables_data[1][""] = "Profit Growth"
+#     year_data_tables_data.append(table_data)
+#   year_data_tables_data[0][""] = "Sales Growth"
+#   year_data_tables_data[1][""] = "Profit Growth"
 
-  # for table in year_data_tables:
-  #   trows = table.find_all("tr")
-  #   header = trows[0].find("th").text.strip()
-  #   year_data_tables_data[header] = {}
+#   # for table in year_data_tables:
+#   #   trows = table.find_all("tr")
+#   #   header = trows[0].find("th").text.strip()
+#   #   year_data_tables_data[header] = {}
 
-  #   for i in range (1, len(trows)):
-  #     data_points = trows[i].find_all("td")
-  #     label = data_points[0].text.strip().replace(",","").replace(":","")
-  #     value = data_points[1].text.strip().replace(",","").replace(":","")
-  #     year_data_tables_data[header][label] = value
+#   #   for i in range (1, len(trows)):
+#   #     data_points = trows[i].find_all("td")
+#   #     label = data_points[0].text.strip().replace(",","").replace(":","")
+#   #     value = data_points[1].text.strip().replace(",","").replace(":","")
+#   #     year_data_tables_data[header][label] = value
 
-  return year_data_tables_data
+#   return year_data_tables_data
 
-# PNL STATEMENT
-def get_pnl_table(pnl_section):
-  table = pnl_section.find("table", class_="data-table")
-  headers = [th.text.strip() for th in table.find('thead').find_all('th')]
-  headers[0] = "Particulars"
+# # PNL STATEMENT
+# def get_pnl_table(pnl_section):
+#   table = pnl_section.find("table", class_="data-table")
+#   headers = [th.text.strip() for th in table.find('thead').find_all('th')]
+#   headers[0] = "Particulars"
 
-  data = []
-  for row in table.find('tbody').find_all('tr'):
-    # row_data = [td.text.strip() for td in row.find_all('td')]
-    tds = row.find_all('td')
-    row_data = []
-    for i in range(len(tds)):
-      if i == 0:
-        row_data.append(tds[i].text.strip().replace("+", "").strip())
-      else:
-        data_value = tds[i].text.strip().replace(",", "").replace("%","").strip()
-        row_data.append(float(data_value)) if data_value else row_data.append(data_value)
+#   data = []
+#   for row in table.find('tbody').find_all('tr'):
+#     # row_data = [td.text.strip() for td in row.find_all('td')]
+#     tds = row.find_all('td')
+#     row_data = []
+#     for i in range(len(tds)):
+#       if i == 0:
+#         row_data.append(tds[i].text.strip().replace("+", "").strip())
+#       else:
+#         data_value = tds[i].text.strip().replace(",", "").replace("%","").strip()
+#         row_data.append(float(data_value)) if data_value else row_data.append(data_value)
 
-    data.append(row_data)
+#     data.append(row_data)
 
-  df = pd.DataFrame(data, columns=headers)
-  df.set_index(df.columns[0], inplace = True)
+#   df = pd.DataFrame(data, columns=headers)
+#   df.set_index(df.columns[0], inplace = True)
 
-  return df
+#   return df
 
 
-# RATIOS
-def get_ratios(soup):
-  ratio_section = soup.find("section", id="ratios")
-  table = ratio_section.find("table", class_="data-table")
+# # RATIOS
+# def get_ratios(soup):
+#   ratio_section = soup.find("section", id="ratios")
+#   table = ratio_section.find("table", class_="data-table")
 
-  headers = [th.text.strip() for th in table.find('thead').find_all('th')]
-  headers[0] = "Particulars"
+#   headers = [th.text.strip() for th in table.find('thead').find_all('th')]
+#   headers[0] = "Particulars"
 
-  data = []
-  for row in table.find('tbody').find_all('tr'):
-    # row_data = [td.text.strip() for td in row.find_all('td')]
-    tds = row.find_all('td')
-    row_data = []
-    for i in range(len(tds)):
-      if i == 0:
-        row_data.append(tds[i].text.strip())
-      else:
-        data_value = tds[i].text.strip().replace(",", "").replace("%","").strip()
-        row_data.append(float(data_value)) if data_value else row_data.append(data_value)
+#   data = []
+#   for row in table.find('tbody').find_all('tr'):
+#     # row_data = [td.text.strip() for td in row.find_all('td')]
+#     tds = row.find_all('td')
+#     row_data = []
+#     for i in range(len(tds)):
+#       if i == 0:
+#         row_data.append(tds[i].text.strip())
+#       else:
+#         data_value = tds[i].text.strip().replace(",", "").replace("%","").strip()
+#         row_data.append(float(data_value)) if data_value else row_data.append(data_value)
 
-    data.append(row_data)
+#     data.append(row_data)
 
-  df = pd.DataFrame(data, columns=headers)
-  df.set_index(df.columns[0], inplace = True)
+#   df = pd.DataFrame(data, columns=headers)
+#   df.set_index(df.columns[0], inplace = True)
   
-  return df
+#   return df
