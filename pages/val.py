@@ -18,7 +18,7 @@ dash.register_page(__name__, path='/val', name = "DCF Valuation")
 
 # app.layout = [html.Div(children='Hello World')]
 
-layout = html.Div(id="body", style = {"padding":"5%"}, children =[
+layout = html.Div(id="body", className = "px-5 py-3", children =[
     html.Div(children = [
       html.H1("Valuing Consistent Compounders"),
       html.P("Hi there!"),
