@@ -32,10 +32,20 @@ def scrape_screener_info(symbol):
 
     # # TOP RATIOS
     # top_ratios_data = get_top_ratios(soup)
+
     # print(top_ratios_data)
+
 
     # # 3, 5, 10 YEAR DATA
     # year_data_tables_data = get_range_tables(pnl_section)
+    
+    # tmp_df = pd.DataFrame(year_data_tables_data)[["", "10 Years", "5 Years", "3 Years", "TTM"]]
+    # tmp_df.set_index(tmp_df.columns[0], inplace = True)
+    # l = [col for col in tmp_df.columns.to_list()][:]
+    # print(l)
+    # print(tmp_df.loc["Sales Growth", :].to_list())
+
+
     # print(year_data_tables_data)
     # print(pd.DataFrame(year_data_tables_data))
 
@@ -109,9 +119,9 @@ def get_range_tables(pnl_section):
 
     for i in range (1, len(trows)):
       data_points = trows[i].find_all("td")
-      label = data_points[0].text.strip().replace(",","").replace(":","")
-      value = data_points[1].text.strip().replace(",","").replace(":","")
-      table_data[label] = value
+      label = data_points[0].text.strip().replace(",","").replace(":","").replace("Years", "YRS").strip()
+      value = data_points[1].text.strip().replace(",","").replace(":","").replace("%", "").strip()
+      table_data[label] = round(float(value),2)
     
     year_data_tables_data.append(table_data)
   year_data_tables_data[0][""] = "Sales Growth"
@@ -183,3 +193,4 @@ def get_ratios(soup):
   df.set_index(df.columns[0], inplace = True)
   
   return df
+
