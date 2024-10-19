@@ -271,6 +271,6 @@ def dcf_callback_function(symbol, coc, roce, g, g_period, fade_period, gt):
     overvaluation = round(float(calculate_degree_of_overvaluation(current_pe, fy23_pe, intrinsic_pe) * 100),0)
 
 
-    return symbol, current_pe, fy23_pe, str(median_5yr_roce) + "%", years_data_df[["", "10 Years", "5 Years", "3 Years", "TTM"]].to_dict('records'), round(intrinsic_pe, 2), overvaluation, , [fig1,fig2] 
+    return symbol, current_pe, fy23_pe, str(median_5yr_roce) + "%", years_data_df[["", "10 Years", "5 Years", "3 Years", "TTM"]].to_dict('records'), round(intrinsic_pe, 2), overvaluation, [fig1,fig2] 
 
 ###################################################################################################
