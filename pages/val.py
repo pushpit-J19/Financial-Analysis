@@ -110,11 +110,12 @@ layout = html.Div(id="body", className = "px-5 py-3", children =[
     ]),
 
 
+
     # DATA TABLES
     html.Br(),
     dt.DataTable(
-        data = [{'': 'Sales Growth', '10 Years': '0%', '5 Years': '0%', '3 Years': '0%', 'TTM': '0%'}, {'Particular': 'Profit Growth', '10 Years': '0%', '5 Years': '0%', '3 Years': '0%', 'TTM': '0%'}],
-        columns = [{"name": i, "id": i} for i in  ["", "10 Years", "5 Years", "3 Years", "TTM"]],
+        data = [{'': 'Sales Growth', '10 YRS': '0%', '5 YRS': '0%', '3 YRS': '0%', 'TTM': '0%'}, {'Particular': 'Profit Growth', '10 YRS': '0%', '5 YRS': '0%', '3 YRS': '0%', 'TTM': '0%'}],
+        columns = [{"name": i, "id": i} for i in  ["", "10 YRS", "5 YRS", "3 YRS", "TTM"]],
         id = "year_data_table"
     ),
 
@@ -122,24 +123,14 @@ layout = html.Div(id="body", className = "px-5 py-3", children =[
 
     # Graphs
     html.Br(),
-
-    html.Div(children = [
-        dcc.Graph(
-          figure={
-              'data': [
-                  {'x': [21,22,30,70], 'y': ["TTM", "3 yrs", "5 yrs", "10 yrs"], 'type': 'bar', 'name': 'SF', "orientation": "h"},
-              ],
-              "layout" : {
-                'title' : 'Sales Growth %',
-                'plot_bgcolor': "#eee",
-                "paper_bgcolor" : "teal",
-                'font' : {
-                    'color': 'white'
-                  }
-              }
-            }              
-          )
-        ]),
+    html.Div(
+        id = "graph-holder",
+        style = {"display": "flex"},
+        children = [
+            dcc.Graph( id="sales-graph", style={'display': 'inline-block'}, figure={}),
+            dcc.Graph( id="profit-graph", style={'display': 'inline-block'}, figure={}),
+        ]
+    ),
     
 
     # Valuation Data points
@@ -163,11 +154,13 @@ layout = html.Div(id="body", className = "px-5 py-3", children =[
     Output(component_id ='current_pe_span', component_property ='children'),
     Output(component_id ='fy23_pe_span', component_property ='children'),
     Output(component_id ='median_roce_span', component_property ='children'),
+
     Output(component_id ='year_data_table', component_property ='data'),
-    # Output(component_id ='graphs1', component_property ='children'),
-    # Output(component_id ='graphs2', component_property ='children'),
+    
     Output(component_id ='calc_pe_span', component_property ='children'),
     Output(component_id ='overvaluation_span', component_property ='children'),
+    
+    Output(component_id ='graph-holder', component_property ='children'),
 
     Input(component_id ='symbol', component_property ='value'),
     Input(component_id ='coc-slider', component_property ='value'),
@@ -197,6 +190,63 @@ def dcf_callback_function(symbol, coc, roce, g, g_period, fade_period, gt):
     year_data_tables_data = get_range_tables(pnl_section)
     years_data_df = pd.DataFrame(year_data_tables_data)[0:2]
 
+    # GRAPH
+    tmp_df = years_data_df[["", "10 YRS", "5 YRS", "3 YRS", "TTM"]]
+    tmp_df.set_index(tmp_df.columns[0], inplace = True)
+    l = [col for col in tmp_df.columns.to_list()][:]
+    print(l)
+    print(tmp_df.loc["Sales Growth", :].to_list())
+    fig1 = dcc.Graph(
+              id="sales-graph",
+              style={'display': 'inline-block'},
+              figure={
+                  "data": [
+                      {
+                          "x": tmp_df.loc["Sales Growth", :].to_list(),
+                          "y": l,
+                          "type": "bar",
+                          "marker": {
+                              "color": "#636efa",
+                              },
+                          "orientation": "h"
+                      }
+                  ],
+                  
+                  "layout": {
+                      'title': '',
+                      "xaxis": {"title": "Sales Growth %"},
+                      "yaxis": {"title": "Time Period"},
+                      'plot_bgcolor': "#e5ecf6",
+                      # 'paper_bgcolor': colors['background']
+                  },
+              },
+            )
+    fig2 = dcc.Graph(
+              id="profit-graph",
+              style={'display': 'inline-block'},
+              figure={
+                  "data": [
+                      {
+                          "x": tmp_df.loc["Profit Growth", :].to_list(),
+                          "y": l,
+                          "type": "bar",
+                          "marker": {
+                              "color": "#636efa",
+                              },
+                          "orientation": "h"
+                      }
+                  ],
+                  "layout": {
+                      'title': '',
+                      "xaxis": {"title": "Profit Growth %"},
+                      "yaxis": {"title": "Time Period"},
+                      'plot_bgcolor': "#e5ecf6",
+                      # 'paper_bgcolor': colors['background']
+                  },
+              },
+            )
+  
+
     # PNL
     pnl_df = get_pnl_table(pnl_section)
 
@@ -220,6 +270,7 @@ def dcf_callback_function(symbol, coc, roce, g, g_period, fade_period, gt):
     # # Degree of overvaluation
     overvaluation = round(float(calculate_degree_of_overvaluation(current_pe, fy23_pe, intrinsic_pe) * 100),0)
 
-    return symbol, current_pe, fy23_pe, str(median_5yr_roce) + "%", years_data_df[["", "10 Years", "5 Years", "3 Years", "TTM"]].to_dict('records'), round(intrinsic_pe, 2), overvaluation
+
+    return symbol, current_pe, fy23_pe, str(median_5yr_roce) + "%", years_data_df[["", "10 Years", "5 Years", "3 Years", "TTM"]].to_dict('records'), round(intrinsic_pe, 2), overvaluation, , [fig1,fig2] 
 
 ###################################################################################################
