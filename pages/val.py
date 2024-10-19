@@ -172,6 +172,7 @@ layout = html.Div(id="body", className = "px-5 py-3", children =[
     Input(component_id ='fade-years-slider', component_property ='value'),
     Input(component_id ='terminal-rate-slider', component_property ='value'),
 )
+
 def dcf_callback_function(symbol, coc, roce, g, g_period, fade_period, gt):
   
   status, soup = scrape_screener_info(symbol)
@@ -185,93 +186,122 @@ def dcf_callback_function(symbol, coc, roce, g, g_period, fade_period, gt):
     pnl_section = soup.find("section", id="profit-loss")
 
     # TOP RATIOS
-    top_ratios_data = get_top_ratios(soup)
-    current_pe = round(float(top_ratios_data['Stock P/E']),2)
+    try:
+      top_ratios_data = get_top_ratios(soup)
+      current_pe = round(float(top_ratios_data['Stock P/E']),2)
+    except:
+      current_pe = "NA"
     
     # 3, 5, 10 YEAR DATA
-    year_data_tables_data = get_range_tables(pnl_section)
-    years_data_df = pd.DataFrame(year_data_tables_data)[0:2]
+    try:
+      year_data_tables_data = get_range_tables(pnl_section)
+      years_data_df = pd.DataFrame(year_data_tables_data)[0:2]
+      passed_year_data = years_data_df[["", "10 YRS", "5 YRS", "3 YRS", "TTM"]].to_dict('records')
+    except:
+      passed_year_data = [{'': 'Sales Growth', '10 YRS': '0%', '5 YRS': '0%', '3 YRS': '0%', 'TTM': '0%'}, {'Particular': 'Profit Growth', '10 YRS': '0%', '5 YRS': '0%', '3 YRS': '0%', 'TTM': '0%'}]
+
 
     # GRAPH
-    tmp_df = years_data_df[["", "10 YRS", "5 YRS", "3 YRS", "TTM"]]
-    tmp_df.set_index(tmp_df.columns[0], inplace = True)
-    l = [col for col in tmp_df.columns.to_list()][:]
-    print(l)
-    print(tmp_df.loc["Sales Growth", :].to_list())
-    fig1 = dcc.Graph(
-              id="sales-graph",
-              style={'display': 'inline-block'},
-              figure={
-                  "data": [
-                      {
-                          "x": tmp_df.loc["Sales Growth", :].to_list(),
-                          "y": l,
-                          "type": "bar",
-                          "marker": {
-                              "color": "#636efa",
-                              },
-                          "orientation": "h"
-                      }
-                  ],
-                  
-                  "layout": {
-                      'title': '',
-                      "xaxis": {"title": "Sales Growth %"},
-                      "yaxis": {"title": "Time Period"},
-                      'plot_bgcolor': "#e5ecf6",
-                      # 'paper_bgcolor': colors['background']
-                  },
-              },
-            )
-    fig2 = dcc.Graph(
-              id="profit-graph",
-              style={'display': 'inline-block'},
-              figure={
-                  "data": [
-                      {
-                          "x": tmp_df.loc["Profit Growth", :].to_list(),
-                          "y": l,
-                          "type": "bar",
-                          "marker": {
-                              "color": "#636efa",
-                              },
-                          "orientation": "h"
-                      }
-                  ],
-                  "layout": {
-                      'title': '',
-                      "xaxis": {"title": "Profit Growth %"},
-                      "yaxis": {"title": "Time Period"},
-                      'plot_bgcolor': "#e5ecf6",
-                      # 'paper_bgcolor': colors['background']
-                  },
-              },
-            )
-  
+    try:
+      tmp_df = years_data_df[["", "10 YRS", "5 YRS", "3 YRS", "TTM"]]
+      tmp_df.set_index(tmp_df.columns[0], inplace = True)
+      l = [col for col in tmp_df.columns.to_list()][:]
+      print(l)
+      print(tmp_df.loc["Sales Growth", :].to_list())
+      fig1 = dcc.Graph(
+                id="sales-graph",
+                style={'display': 'inline-block'},
+                figure={
+                    "data": [
+                        {
+                            "x": tmp_df.loc["Sales Growth", :].to_list(),
+                            "y": l,
+                            "type": "bar",
+                            "marker": {
+                                "color": "#636efa",
+                                },
+                            "orientation": "h"
+                        }
+                    ],
+                    
+                    "layout": {
+                        'title': '',
+                        "xaxis": {"title": "Sales Growth %"},
+                        "yaxis": {"title": "Time Period"},
+                        'plot_bgcolor': "#e5ecf6",
+                        # 'paper_bgcolor': colors['background']
+                    },
+                },
+              )
+      fig2 = dcc.Graph(
+                id="profit-graph",
+                style={'display': 'inline-block'},
+                figure={
+                    "data": [
+                        {
+                            "x": tmp_df.loc["Profit Growth", :].to_list(),
+                            "y": l,
+                            "type": "bar",
+                            "marker": {
+                                "color": "#636efa",
+                                },
+                            "orientation": "h"
+                        }
+                    ],
+                    "layout": {
+                        'title': '',
+                        "xaxis": {"title": "Profit Growth %"},
+                        "yaxis": {"title": "Time Period"},
+                        'plot_bgcolor': "#e5ecf6",
+                        # 'paper_bgcolor': colors['background']
+                    },
+                },
+              )
+    except:
+      fig1 = dcc.Graph( id="sales-graph", style={'display': 'inline-block'}, figure={})
+      fig2 = dcc.Graph( id="profit-graph", style={'display': 'inline-block'}, figure={})
 
     # PNL
     pnl_df = get_pnl_table(pnl_section)
 
     # fy23_pe
-    if "Mar 2023" in pnl_df.columns.to_list():
-      fy23PAT = pnl_df.loc["Net Profit", "Mar 2023"]
-    elif "Dec 2023" in pnl_df.columns.to_list():
-      fy23PAT = pnl_df.loc["Net Profit", "Dec 2023"]
-    else:
-      fy23PAT = pnl_df.loc["Net Profit", :].iloc[-3]  # -1 is TTM, -2 is current year, -3 is fy23
-    fy23_pe = round(float(top_ratios_data["Market Cap"]) / fy23PAT, 2)
+    try:
+      if "Mar 2023" in pnl_df.columns.to_list():
+        fy23PAT = pnl_df.loc["Net Profit", "Mar 2023"]
+      elif "Dec 2023" in pnl_df.columns.to_list():
+        fy23PAT = pnl_df.loc["Net Profit", "Dec 2023"]
+      else:
+        fy23PAT = pnl_df.loc["Net Profit", :].iloc[-3]  # -1 is TTM, -2 is current year, -3 is fy23
+      fy23_pe = round(float(top_ratios_data["Market Cap"]) / fy23PAT, 2)
+    except:
+      fy23_pe = "NA"
     
     # RATIOS for ROCE
-    ratio_df = get_ratios(soup)
-    median_5yr_roce = round(float(ratio_df.loc["ROCE %", :].iloc[-7:-2].median()),2)
+    try:
+      ratio_df = get_ratios(soup)
+      # print("here, ", "ROCE %" in ratio_df.index.to_list(), "ROE %" in ratio_df.index.to_list())
+      if "ROCE %" in ratio_df.index.to_list():
+        median_5yr_roce = round(float(ratio_df.loc["ROCE %", :].iloc[-7:-2].median()),2)
+      elif "ROE %" in ratio_df.index.to_list():
+        median_5yr_roce = round(float(ratio_df.loc["ROE %", :].iloc[-7:-2].median()),2)
+      else:
+        median_5yr_roce = "NA"
+    except:
+      median_5yr_roce = "NA"
 
     # DCF Calculations
-    dcf_calc_df, dcf_metrics_dict = calculate_intrinsic_pe(coc/100, roce/100, g/100, g_period, fade_period, gt/100)
-    intrinsic_pe = round(float(dcf_metrics_dict["TTM PE"]),2)
+    try:
+      dcf_calc_df, dcf_metrics_dict = calculate_intrinsic_pe(coc/100, roce/100, g/100, g_period, fade_period, gt/100)
+      intrinsic_pe = round(float(dcf_metrics_dict["TTM PE"]),2)
 
-    # # Degree of overvaluation
-    overvaluation = round(float(calculate_degree_of_overvaluation(current_pe, fy23_pe, intrinsic_pe) * 100),0)
+      # # Degree of overvaluation
+      overvaluation = round(float(calculate_degree_of_overvaluation(current_pe, fy23_pe, intrinsic_pe) * 100),0)
+    except:
+      intrinsic_pe = "NA"
+      overvaluation = "NA"
 
-    return symbol, current_pe, fy23_pe, str(median_5yr_roce) + "%", years_data_df[["", "10 YRS", "5 YRS", "3 YRS", "TTM"]].to_dict('records'), round(intrinsic_pe, 2), overvaluation, [fig1,fig2]
+
+    return symbol, current_pe, fy23_pe, str(median_5yr_roce) + "%", passed_year_data, round(intrinsic_pe, 2), overvaluation, [fig1,fig2]
+
 
 ###################################################################################################
