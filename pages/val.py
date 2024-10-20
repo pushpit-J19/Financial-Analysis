@@ -104,7 +104,8 @@ layout = html.Div(id="body", className = "px-5 py-3", children =[
         html.P(style={"line-height": "1.6"}, children = [
             html.Span("Stock Symbol: "), html.Span(id="stock_symbol_span"), html.Br(),
             html.Span("Current PE: "), html.Span(id="current_pe_span"), html.Br(),
-            html.Span("FY23 PE: "), html.Span(id="fy23_pe_span"), html.Br(),
+            html.Span("FY23 PE (based on FY23 PAT as per mail): "), html.Span(id="fy23_pe_span"), html.Br(),
+            html.Span("FY23 PE (based on reference web app to be replicated): "), html.Span(id="fy23_pe_span_2"), html.Br(),   # additional
             html.Span("5-yr median pre-tax RoCE: "), html.Span(id="median_roce_span"), html.Br(),
         ])
     ]),
@@ -139,7 +140,8 @@ layout = html.Div(id="body", className = "px-5 py-3", children =[
         html.P(style={"line-height": "1.6"}, children = [
             html.Span("Play with inputs to see changes in intrinsic PE and overvaluation: "), html.Br(),
             html.Span("The calculated intrinsic PE is: "), html.Span(id="calc_pe_span"), html.Br(),
-            html.Span("Degree of overvaluation: "), html.Span(id="overvaluation_span"), html.Span("%"), html.Br(),
+            html.Span("Degree of overvaluation (based on FY23 PAT as per mail): "), html.Span(id="overvaluation_span"), html.Span("%"), html.Br(),
+            html.Span("Degree of overvaluation (based on reference web app to be replicated): "), html.Span(id="overvaluation_span_2"), html.Span("%"), html.Br(),     # additional
         ])
     ])
 
@@ -153,6 +155,7 @@ layout = html.Div(id="body", className = "px-5 py-3", children =[
     Output(component_id ='stock_symbol_span', component_property ='children'),
     Output(component_id ='current_pe_span', component_property ='children'),
     Output(component_id ='fy23_pe_span', component_property ='children'),
+    Output(component_id ='fy23_pe_span_2', component_property ='children'),    # additional
     Output(component_id ='median_roce_span', component_property ='children'),
 
     Output(component_id ='year_data_table', component_property ='data'),
@@ -160,6 +163,7 @@ layout = html.Div(id="body", className = "px-5 py-3", children =[
     
     Output(component_id ='calc_pe_span', component_property ='children'),
     Output(component_id ='overvaluation_span', component_property ='children'),
+    Output(component_id ='overvaluation_span_2', component_property ='children'),     # additional
     # Output(component_id ='sales-graph', component_property ='figure'),
     # Output(component_id ='sales-graph', component_property ='figure'),
     Output(component_id ='graph-holder', component_property ='children'),
@@ -229,7 +233,6 @@ def dcf_callback_function(symbol, coc, roce, g, g_period, fade_period, gt):
                         "xaxis": {"title": "Sales Growth %"},
                         "yaxis": {"title": "Time Period"},
                         'plot_bgcolor': "#e5ecf6",
-                        # 'paper_bgcolor': colors['background']
                     },
                 },
               )
@@ -253,7 +256,6 @@ def dcf_callback_function(symbol, coc, roce, g, g_period, fade_period, gt):
                         "xaxis": {"title": "Profit Growth %"},
                         "yaxis": {"title": "Time Period"},
                         'plot_bgcolor': "#e5ecf6",
-                        # 'paper_bgcolor': colors['background']
                     },
                 },
               )
@@ -273,8 +275,10 @@ def dcf_callback_function(symbol, coc, roce, g, g_period, fade_period, gt):
       else:
         fy23PAT = pnl_df.loc["Net Profit", :].iloc[-3]  # -1 is TTM, -2 is current year, -3 is fy23
       fy23_pe = round(float(top_ratios_data["Market Cap"]) / fy23PAT, 2)
+      fy23_pe_2 = round(float(top_ratios_data["Market Cap"]) / pnl_df.loc["Net Profit", :].iloc[-2], 2)       # additional
     except:
       fy23_pe = "NA"
+      fy23_pe_2 = "NA"        # additional
     
     # RATIOS for ROCE
     try:
@@ -296,12 +300,15 @@ def dcf_callback_function(symbol, coc, roce, g, g_period, fade_period, gt):
 
       # # Degree of overvaluation
       overvaluation = round(float(calculate_degree_of_overvaluation(current_pe, fy23_pe, intrinsic_pe) * 100),0)
+      overvaluation_2 = round(float(calculate_degree_of_overvaluation(current_pe, fy23_pe_2, intrinsic_pe) * 100),0)  # additional
     except:
       intrinsic_pe = "NA"
       overvaluation = "NA"
+      overvaluation_2 = "NA"  # additional
 
 
-    return symbol, current_pe, fy23_pe, str(median_5yr_roce) + "%", passed_year_data, round(intrinsic_pe, 2), overvaluation, [fig1,fig2]
+    # return symbol, current_pe, fy23_pe, str(median_5yr_roce) + "%", passed_year_data, round(intrinsic_pe, 2), overvaluation, [fig1,fig2]
+    return symbol, current_pe, fy23_pe, fy23_pe_2, str(median_5yr_roce) + "%", passed_year_data, round(intrinsic_pe, 2), overvaluation, overvaluation_2, [fig1,fig2]
 
 
 ###################################################################################################
